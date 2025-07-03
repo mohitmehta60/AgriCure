@@ -1,4 +1,4 @@
-import { MapPin, Cloud, Brain, Smartphone, DivideIcon as LucideIcon } from "lucide-react";
+import { MapPin, Cloud, Brain, Smartphone, LucideIcon } from "lucide-react";
 import React from "react";
 
 interface Step {
