@@ -51,7 +51,7 @@ export const fetchThingSpeakData = async (): Promise<ThingSpeakData | null> => {
 export const getMockThingSpeakData = (): ThingSpeakData => ({
   nitrogen: 45.2,
   phosphorus: 23.8,
-  potassium: 156.4,
+  potassium: 156.4, // Now consistently in mg/kg
   soilMoisture: 68.5,
   soilPH: 6.8,
   temperature: 24.3,

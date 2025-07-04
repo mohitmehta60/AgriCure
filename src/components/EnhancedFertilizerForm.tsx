@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { getCropTypeOptions, getSoilTypeOptions } from "@/services/fertilizerMLService";
+import { Sparkles, Leaf } from "lucide-react";
 
 interface FormData {
   fieldName: string;
@@ -50,15 +52,6 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
     }));
   };
 
-  const convertToHectares = (size: number, unit: string): number => {
-    switch (unit) {
-      case 'acres': return size * 0.404686;
-      case 'bigha': return size * 0.1338; // Approximate conversion
-      case 'hectares':
-      default: return size;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -74,103 +67,114 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
     }, 2000);
   };
 
+  const cropOptions = getCropTypeOptions();
+  const soilOptions = getSoilTypeOptions();
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+    <Card className="w-full border-0 shadow-xl bg-gradient-to-br from-white to-gray-50 hover:shadow-2xl transition-all duration-500">
+      <CardHeader className="px-4 sm:px-6 bg-gradient-to-r from-grass-50 to-green-50 rounded-t-lg">
+        <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl text-grass-800">
+          <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-grass-600 animate-pulse" />
           <span>Enhanced Fertilizer Recommendation Form</span>
         </CardTitle>
-        <CardDescription>
-          Provide detailed field information for precise fertilizer recommendations
+        <CardDescription className="text-sm sm:text-base text-grass-700">
+          Provide detailed field information for precise ML-powered fertilizer recommendations
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <CardContent className="px-4 sm:px-6 py-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Basic Field Information */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="fieldName">Field Name *</Label>
-              <Input
-                id="fieldName"
-                placeholder="e.g., North Field"
-                value={formData.fieldName}
-                onChange={(e) => handleChange("fieldName", e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="fieldSize">Field Size *</Label>
+          <div className="space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center space-x-2">
+              <Leaf className="h-4 w-4 sm:h-5 sm:w-5 text-grass-600" />
+              <span>Field Information</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fieldName" className="text-sm sm:text-base font-medium text-gray-700">Field Name *</Label>
                 <Input
-                  id="fieldSize"
-                  type="number"
-                  step="0.1"
-                  placeholder="e.g., 2.5"
-                  value={formData.fieldSize}
-                  onChange={(e) => handleChange("fieldSize", e.target.value)}
+                  id="fieldName"
+                  placeholder="e.g., North Field"
+                  value={formData.fieldName}
+                  onChange={(e) => handleChange("fieldName", e.target.value)}
                   required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300"
                 />
               </div>
-              <div>
-                <Label htmlFor="sizeUnit">Unit</Label>
-                <Select onValueChange={(value) => handleChange("sizeUnit", value)} defaultValue="hectares">
-                  <SelectTrigger>
-                    <SelectValue />
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="fieldSize" className="text-sm sm:text-base font-medium text-gray-700">Field Size *</Label>
+                  <Input
+                    id="fieldSize"
+                    type="number"
+                    step="0.1"
+                    placeholder="e.g., 2.5"
+                    value={formData.fieldSize}
+                    onChange={(e) => handleChange("fieldSize", e.target.value)}
+                    required
+                    className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sizeUnit" className="text-sm sm:text-base font-medium text-gray-700">Unit</Label>
+                  <Select onValueChange={(value) => handleChange("sizeUnit", value)} defaultValue="hectares">
+                    <SelectTrigger className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hectares">Hectares</SelectItem>
+                      <SelectItem value="acres">Acres</SelectItem>
+                      <SelectItem value="bigha">Bigha</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Crop and Soil Type */}
+          <div className="space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800">Crop & Soil Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cropType" className="text-sm sm:text-base font-medium text-gray-700">Crop Type *</Label>
+                <Select onValueChange={(value) => handleChange("cropType", value)}>
+                  <SelectTrigger className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300">
+                    <SelectValue placeholder="Select crop type" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {cropOptions.map((crop) => (
+                      <SelectItem key={crop.value} value={crop.value} className="hover:bg-grass-50 transition-colors duration-200">
+                        {crop.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="soilType" className="text-sm sm:text-base font-medium text-gray-700">Soil Type *</Label>
+                <Select onValueChange={(value) => handleChange("soilType", value)}>
+                  <SelectTrigger className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300">
+                    <SelectValue placeholder="Select soil type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hectares">Hectares</SelectItem>
-                    <SelectItem value="acres">Acres</SelectItem>
-                    <SelectItem value="bigha">Bigha</SelectItem>
+                    {soilOptions.map((soil) => (
+                      <SelectItem key={soil.value} value={soil.value} className="hover:bg-grass-50 transition-colors duration-200">
+                        {soil.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
 
-          {/* Crop and Soil Type */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="cropType">Crop Type *</Label>
-              <Select onValueChange={(value) => handleChange("cropType", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select crop type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="wheat">Wheat</SelectItem>
-                  <SelectItem value="rice">Rice</SelectItem>
-                  <SelectItem value="corn">Corn/Maize</SelectItem>
-                  <SelectItem value="soybeans">Soybeans</SelectItem>
-                  <SelectItem value="cotton">Cotton</SelectItem>
-                  <SelectItem value="sugarcane">Sugarcane</SelectItem>
-                  <SelectItem value="vegetables">Vegetables</SelectItem>
-                  <SelectItem value="fruits">Fruits</SelectItem>
-                  <SelectItem value="pulses">Pulses</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="soilType">Soil Type *</Label>
-              <Select onValueChange={(value) => handleChange("soilType", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select soil type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="black">Black Soil</SelectItem>
-                  <SelectItem value="loamy">Loamy Soil</SelectItem>
-                  <SelectItem value="clayey">Clayey Soil</SelectItem>
-                  <SelectItem value="red">Red Soil</SelectItem>
-                  <SelectItem value="sandy">Sandy Soil</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           {/* Soil Chemistry */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Soil Chemistry</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="soilPH">Soil pH *</Label>
+          <div className="space-y-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+            <h3 className="text-base sm:text-lg font-semibold text-blue-800">Soil Chemistry</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="soilPH" className="text-sm sm:text-base font-medium text-blue-700">Soil pH *</Label>
                 <Input
                   id="soilPH"
                   type="number"
@@ -181,10 +185,11 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
                   value={formData.soilPH}
                   onChange={(e) => handleChange("soilPH", e.target.value)}
                   required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-300"
                 />
               </div>
-              <div>
-                <Label htmlFor="nitrogen">Nitrogen (mg/kg) *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="nitrogen" className="text-sm sm:text-base font-medium text-blue-700">Nitrogen (mg/kg) *</Label>
                 <Input
                   id="nitrogen"
                   type="number"
@@ -193,10 +198,11 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
                   value={formData.nitrogen}
                   onChange={(e) => handleChange("nitrogen", e.target.value)}
                   required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-300"
                 />
               </div>
-              <div>
-                <Label htmlFor="phosphorus">Phosphorus (mg/kg) *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="phosphorus" className="text-sm sm:text-base font-medium text-blue-700">Phosphorus (mg/kg) *</Label>
                 <Input
                   id="phosphorus"
                   type="number"
@@ -205,10 +211,11 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
                   value={formData.phosphorus}
                   onChange={(e) => handleChange("phosphorus", e.target.value)}
                   required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-300"
                 />
               </div>
-              <div>
-                <Label htmlFor="potassium">Potassium (ppm) *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="potassium" className="text-sm sm:text-base font-medium text-blue-700">Potassium (mg/kg) *</Label>
                 <Input
                   id="potassium"
                   type="number"
@@ -217,17 +224,18 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
                   value={formData.potassium}
                   onChange={(e) => handleChange("potassium", e.target.value)}
                   required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-300"
                 />
               </div>
             </div>
           </div>
 
           {/* Environmental Conditions */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Environmental Conditions</h3>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="temperature">Temperature (°C) *</Label>
+          <div className="space-y-4 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
+            <h3 className="text-base sm:text-lg font-semibold text-orange-800">Environmental Conditions</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="temperature" className="text-sm sm:text-base font-medium text-orange-700">Temperature (°C) *</Label>
                 <Input
                   id="temperature"
                   type="number"
@@ -236,10 +244,11 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
                   value={formData.temperature}
                   onChange={(e) => handleChange("temperature", e.target.value)}
                   required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-orange-300"
                 />
               </div>
-              <div>
-                <Label htmlFor="humidity">Humidity (%) *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="humidity" className="text-sm sm:text-base font-medium text-orange-700">Humidity (%) *</Label>
                 <Input
                   id="humidity"
                   type="number"
@@ -250,10 +259,11 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
                   value={formData.humidity}
                   onChange={(e) => handleChange("humidity", e.target.value)}
                   required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-orange-300"
                 />
               </div>
-              <div>
-                <Label htmlFor="soilMoisture">Soil Moisture (%) *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="soilMoisture" className="text-sm sm:text-base font-medium text-orange-700">Soil Moisture (%) *</Label>
                 <Input
                   id="soilMoisture"
                   type="number"
@@ -264,18 +274,52 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
                   value={formData.soilMoisture}
                   onChange={(e) => handleChange("soilMoisture", e.target.value)}
                   required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-orange-300"
                 />
               </div>
             </div>
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full bg-grass-600 hover:bg-grass-700"
-            disabled={isLoading}
-          >
-            {isLoading ? "Generating Recommendations..." : "Generate Enhanced Recommendations"}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <Button 
+              type="submit" 
+              className="flex-1 bg-gradient-to-r from-grass-600 to-green-600 hover:from-grass-700 hover:to-green-700 text-sm sm:text-base py-2 sm:py-3 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Generating ML Recommendations...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="h-4 w-4" />
+                  <span>Generate ML Recommendations</span>
+                </div>
+              )}
+            </Button>
+            <Button 
+              type="reset" 
+              variant="outline"
+              className="flex-1 sm:flex-none text-sm sm:text-base py-2 sm:py-3 transition-all duration-300 hover:scale-105 border-grass-300 hover:bg-grass-50"
+              onClick={() => setFormData({
+                fieldName: "",
+                fieldSize: "",
+                sizeUnit: "hectares",
+                cropType: "",
+                soilPH: "",
+                nitrogen: "",
+                phosphorus: "",
+                potassium: "",
+                soilType: "",
+                temperature: "",
+                humidity: "",
+                soilMoisture: ""
+              })}
+            >
+              Reset Form
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>

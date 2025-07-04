@@ -5,6 +5,7 @@ import EnhancedFarmOverview from "@/components/EnhancedFarmOverview";
 import RealTimeSoilAnalysis from "@/components/RealTimeSoilAnalysis";
 import EnhancedFertilizerForm from "@/components/EnhancedFertilizerForm";
 import EnhancedFertilizerRecommendations from "@/components/EnhancedFertilizerRecommendations";
+import { predictFertilizer, FERTILIZER_INFO, CROP_TYPES, SOIL_TYPES } from "@/services/fertilizerMLService";
 
 interface FormData {
   fieldName: string;
@@ -57,16 +58,21 @@ interface EnhancedRecommendation {
     moistureStatus: string;
     recommendations: string[];
   };
+  mlPrediction: {
+    fertilizer: string;
+    confidence: number;
+  };
 }
 
 const Dashboard = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
   const [recommendations, setRecommendations] = useState<EnhancedRecommendation | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   // Get user name from localStorage or use default
   const userName = localStorage.getItem('userName') || 'John Farmer';
 
-  const generateEnhancedRecommendations = (data: FormData): EnhancedRecommendation => {
+  const generateEnhancedRecommendations = async (data: FormData): Promise<EnhancedRecommendation> => {
     const pH = parseFloat(data.soilPH);
     const nitrogen = parseFloat(data.nitrogen);
     const phosphorus = parseFloat(data.phosphorus);
@@ -86,6 +92,20 @@ const Dashboard = () => {
 
     const hectares = convertToHectares(fieldSize, data.sizeUnit);
 
+    // Get ML prediction
+    const mlInput = {
+      temperature: parseFloat(data.temperature),
+      humidity: parseFloat(data.humidity),
+      moisture: parseFloat(data.soilMoisture),
+      soilType: parseInt(data.soilType),
+      cropType: parseInt(data.cropType),
+      nitrogen: nitrogen,
+      potassium: potassium,
+      phosphorus: phosphorus
+    };
+
+    const mlPrediction = await predictFertilizer(mlInput);
+
     // Analyze soil conditions
     const phStatus = pH < 6.0 ? 'Acidic' : pH > 7.5 ? 'Alkaline' : 'Optimal';
     const moistureStatus = moisture < 40 ? 'Low' : moisture > 80 ? 'High' : 'Optimal';
@@ -95,52 +115,47 @@ const Dashboard = () => {
     if (phosphorus < 15) nutrientDeficiency.push('Phosphorus');
     if (potassium < 120) nutrientDeficiency.push('Potassium');
 
-    // Generate recommendations based on crop type and soil conditions
-    let primaryFertilizer, secondaryFertilizer;
+    // Get crop and soil names
+    const cropName = Object.keys(CROP_TYPES).find(key => CROP_TYPES[key as keyof typeof CROP_TYPES] === parseInt(data.cropType)) || 'Unknown';
+    const soilName = Object.keys(SOIL_TYPES).find(key => SOIL_TYPES[key as keyof typeof SOIL_TYPES] === parseInt(data.soilType)) || 'Unknown';
+
+    // Use ML prediction as primary fertilizer
+    const primaryFertilizerInfo = FERTILIZER_INFO[mlPrediction.fertilizer as keyof typeof FERTILIZER_INFO];
     
-    if (data.cropType === 'rice') {
-      primaryFertilizer = {
-        name: 'NPK 20-10-10',
-        amount: `${Math.round(120 * hectares)} kg`,
-        reason: 'Rice requires high nitrogen for tillering and grain filling',
-        applicationMethod: 'Split application: 50% at transplanting, 25% at tillering, 25% at panicle initiation'
-      };
+    const primaryFertilizer = {
+      name: mlPrediction.fertilizer,
+      amount: `${Math.round(100 * hectares)} kg`,
+      reason: primaryFertilizerInfo ? primaryFertilizerInfo.description : `ML model recommends this fertilizer for ${cropName} in ${soilName} soil`,
+      applicationMethod: primaryFertilizerInfo ? primaryFertilizerInfo.application : 'Apply as per standard agricultural practices'
+    };
+
+    // Generate secondary fertilizer based on deficiencies
+    let secondaryFertilizer;
+    if (nutrientDeficiency.includes('Phosphorus')) {
       secondaryFertilizer = {
-        name: 'Zinc Sulphate',
-        amount: `${Math.round(25 * hectares)} kg`,
-        reason: 'Zinc deficiency is common in rice, especially in alkaline soils',
-        applicationMethod: 'Apply as basal dose before transplanting'
+        name: 'DAP',
+        amount: `${Math.round(50 * hectares)} kg`,
+        reason: 'Addresses phosphorus deficiency identified in soil analysis',
+        applicationMethod: 'Apply as basal dose during soil preparation'
       };
-    } else if (data.cropType === 'wheat') {
-      primaryFertilizer = {
-        name: 'DAP 18-46-0',
-        amount: `${Math.round(100 * hectares)} kg`,
-        reason: 'Wheat needs phosphorus for root development and grain formation',
-        applicationMethod: 'Apply as basal dose at sowing time'
-      };
+    } else if (nutrientDeficiency.includes('Potassium')) {
       secondaryFertilizer = {
-        name: 'Urea 46%',
-        amount: `${Math.round(80 * hectares)} kg`,
-        reason: 'Additional nitrogen for vegetative growth and protein content',
-        applicationMethod: 'Split application: 50% at sowing, 50% at crown root initiation'
+        name: 'Potassium sulfate',
+        amount: `${Math.round(40 * hectares)} kg`,
+        reason: 'Addresses potassium deficiency for better fruit quality',
+        applicationMethod: 'Apply during fruit development stage'
       };
     } else {
-      primaryFertilizer = {
-        name: 'NPK 19-19-19',
-        amount: `${Math.round(100 * hectares)} kg`,
-        reason: 'Balanced nutrition for general crop requirements',
-        applicationMethod: 'Apply as basal dose and top dressing as needed'
-      };
       secondaryFertilizer = {
         name: 'Organic Compost',
-        amount: `${Math.round(2000 * hectares)} kg`,
+        amount: `${Math.round(1000 * hectares)} kg`,
         reason: 'Improves soil structure and provides slow-release nutrients',
         applicationMethod: 'Apply 2-3 weeks before planting and incorporate into soil'
       };
     }
 
     // Calculate costs in INR (Indian Rupees)
-    const primaryCost = Math.round(hectares * 3750); // ₹3,750 per hectare
+    const primaryCost = Math.round(hectares * 4000); // ₹4,000 per hectare
     const secondaryCost = Math.round(hectares * 2500); // ₹2,500 per hectare
     const organicCost = Math.round(hectares * 2000); // ₹2,000 per hectare
     const totalCost = primaryCost + secondaryCost + organicCost;
@@ -190,46 +205,67 @@ const Dashboard = () => {
           'Regular soil testing every 6 months is recommended',
           'Consider crop rotation to maintain soil health'
         ].filter(Boolean)
-      }
+      },
+      mlPrediction
     };
   };
 
-  const handleFormSubmit = (data: FormData) => {
+  const handleFormSubmit = async (data: FormData) => {
+    setIsGenerating(true);
     setFormData(data);
-    const enhancedRecommendations = generateEnhancedRecommendations(data);
-    setRecommendations(enhancedRecommendations);
+    
+    try {
+      const enhancedRecommendations = await generateEnhancedRecommendations(data);
+      setRecommendations(enhancedRecommendations);
+    } catch (error) {
+      console.error('Error generating recommendations:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader userName={userName} />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Farm Dashboard</h1>
-          <p className="text-gray-600">
-            Comprehensive soil analysis and fertilizer recommendations powered by real-time data
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Farm Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            Comprehensive soil analysis and fertilizer recommendations powered by real-time data and ML
           </p>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="soil-analysis">Soil Analysis</TabsTrigger>
-            <TabsTrigger value="recommendations">Fertilizer Recommendations</TabsTrigger>
+        <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="soil-analysis" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              Soil Analysis
+            </TabsTrigger>
+            <TabsTrigger value="recommendations" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              ML Recommendations
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
             <EnhancedFarmOverview />
           </TabsContent>
 
-          <TabsContent value="soil-analysis" className="space-y-6">
+          <TabsContent value="soil-analysis" className="space-y-4 sm:space-y-6">
             <RealTimeSoilAnalysis />
           </TabsContent>
 
-          <TabsContent value="recommendations" className="space-y-6">
+          <TabsContent value="recommendations" className="space-y-4 sm:space-y-6">
             <EnhancedFertilizerForm onSubmit={handleFormSubmit} />
-            {recommendations && formData && (
+            {isGenerating && (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-grass-600"></div>
+                <span className="ml-2 text-sm sm:text-base">Generating ML-based recommendations...</span>
+              </div>
+            )}
+            {recommendations && formData && !isGenerating && (
               <EnhancedFertilizerRecommendations 
                 recommendations={recommendations}
                 formData={formData}

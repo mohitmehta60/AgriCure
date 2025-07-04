@@ -62,13 +62,13 @@ const RealTimeSoilAnalysis = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {[...Array(8)].map((_, i) => (
             <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded"></div>
+              <CardContent className="p-3 sm:p-6">
+                <div className="h-3 sm:h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-6 sm:h-8 bg-gray-200 rounded"></div>
               </CardContent>
             </Card>
           ))}
@@ -78,37 +78,37 @@ const RealTimeSoilAnalysis = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Connection Status and Refresh */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
         <div className="flex items-center space-x-2">
           {isConnected ? (
             <>
-              <Wifi className="h-5 w-5 text-green-600" />
-              <span className="text-sm text-green-600">Connected to ThingSpeak</span>
+              <Wifi className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+              <span className="text-xs sm:text-sm text-green-600">Connected to ThingSpeak</span>
             </>
           ) : (
             <>
-              <WifiOff className="h-5 w-5 text-red-600" />
-              <span className="text-sm text-red-600">Using Demo Data</span>
+              <WifiOff className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+              <span className="text-xs sm:text-sm text-red-600">Using Demo Data</span>
             </>
           )}
         </div>
-        <Button onClick={loadData} variant="outline" size="sm" disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        <Button onClick={loadData} variant="outline" size="sm" disabled={loading} className="text-xs sm:text-sm">
+          <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh Data
         </Button>
       </div>
 
       {/* Real-time Parameter Cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Nitrogen (N)</CardTitle>
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Nitrogen (N)</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{data?.nitrogen.toFixed(1)} mg/kg</div>
-            <Progress value={(data?.nitrogen || 0) / 100 * 100} className="h-2 mb-2" />
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold mb-2">{data?.nitrogen.toFixed(1)} mg/kg</div>
+            <Progress value={(data?.nitrogen || 0) / 100 * 100} className="h-1 sm:h-2 mb-2" />
             <div className={`text-xs ${getParameterStatus(data?.nitrogen || 0, 30, 60).color}`}>
               {getParameterStatus(data?.nitrogen || 0, 30, 60).status.toUpperCase()}
             </div>
@@ -116,12 +116,12 @@ const RealTimeSoilAnalysis = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Phosphorus (P)</CardTitle>
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Phosphorus (P)</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{data?.phosphorus.toFixed(1)} mg/kg</div>
-            <Progress value={(data?.phosphorus || 0) / 50 * 100} className="h-2 mb-2" />
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold mb-2">{data?.phosphorus.toFixed(1)} mg/kg</div>
+            <Progress value={(data?.phosphorus || 0) / 50 * 100} className="h-1 sm:h-2 mb-2" />
             <div className={`text-xs ${getParameterStatus(data?.phosphorus || 0, 15, 35).color}`}>
               {getParameterStatus(data?.phosphorus || 0, 15, 35).status.toUpperCase()}
             </div>
@@ -129,12 +129,12 @@ const RealTimeSoilAnalysis = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Potassium (K)</CardTitle>
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Potassium (K)</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{data?.potassium.toFixed(1)} ppm</div>
-            <Progress value={(data?.potassium || 0) / 200 * 100} className="h-2 mb-2" />
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold mb-2">{data?.potassium.toFixed(1)} ppm</div>
+            <Progress value={(data?.potassium || 0) / 200 * 100} className="h-1 sm:h-2 mb-2" />
             <div className={`text-xs ${getParameterStatus(data?.potassium || 0, 120, 180).color}`}>
               {getParameterStatus(data?.potassium || 0, 120, 180).status.toUpperCase()}
             </div>
@@ -142,12 +142,12 @@ const RealTimeSoilAnalysis = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Soil pH</CardTitle>
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Soil pH</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{data?.soilPH.toFixed(1)}</div>
-            <Progress value={(data?.soilPH || 0) / 14 * 100} className="h-2 mb-2" />
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold mb-2">{data?.soilPH.toFixed(1)}</div>
+            <Progress value={(data?.soilPH || 0) / 14 * 100} className="h-1 sm:h-2 mb-2" />
             <div className={`text-xs ${getParameterStatus(data?.soilPH || 0, 6.0, 7.5).color}`}>
               {getParameterStatus(data?.soilPH || 0, 6.0, 7.5).status.toUpperCase()}
             </div>
@@ -155,12 +155,12 @@ const RealTimeSoilAnalysis = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Soil Moisture</CardTitle>
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Soil Moisture</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{data?.soilMoisture.toFixed(1)}%</div>
-            <Progress value={data?.soilMoisture || 0} className="h-2 mb-2" />
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold mb-2">{data?.soilMoisture.toFixed(1)}%</div>
+            <Progress value={data?.soilMoisture || 0} className="h-1 sm:h-2 mb-2" />
             <div className={`text-xs ${getParameterStatus(data?.soilMoisture || 0, 40, 80).color}`}>
               {getParameterStatus(data?.soilMoisture || 0, 40, 80).status.toUpperCase()}
             </div>
@@ -168,12 +168,12 @@ const RealTimeSoilAnalysis = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Temperature</CardTitle>
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Temperature</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{data?.temperature.toFixed(1)}°C</div>
-            <Progress value={(data?.temperature || 0) / 50 * 100} className="h-2 mb-2" />
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold mb-2">{data?.temperature.toFixed(1)}°C</div>
+            <Progress value={(data?.temperature || 0) / 50 * 100} className="h-1 sm:h-2 mb-2" />
             <div className={`text-xs ${getParameterStatus(data?.temperature || 0, 15, 35).color}`}>
               {getParameterStatus(data?.temperature || 0, 15, 35).status.toUpperCase()}
             </div>
@@ -181,12 +181,12 @@ const RealTimeSoilAnalysis = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Humidity</CardTitle>
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Humidity</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{data?.humidity.toFixed(1)}%</div>
-            <Progress value={data?.humidity || 0} className="h-2 mb-2" />
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-lg sm:text-2xl font-bold mb-2">{data?.humidity.toFixed(1)}%</div>
+            <Progress value={data?.humidity || 0} className="h-1 sm:h-2 mb-2" />
             <div className={`text-xs ${getParameterStatus(data?.humidity || 0, 50, 80).color}`}>
               {getParameterStatus(data?.humidity || 0, 50, 80).status.toUpperCase()}
             </div>
@@ -194,10 +194,10 @@ const RealTimeSoilAnalysis = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Last Updated</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             <div className="text-sm font-medium">
               {data ? new Date(data.timestamp).toLocaleTimeString() : 'N/A'}
             </div>
@@ -209,18 +209,18 @@ const RealTimeSoilAnalysis = () => {
       </div>
 
       {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>NPK Levels Trend (24h)</CardTitle>
-            <CardDescription>Historical nutrient levels</CardDescription>
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="text-lg sm:text-xl">NPK Levels Trend (24h)</CardTitle>
+            <CardDescription className="text-sm sm:text-base">Historical nutrient levels</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="px-4 sm:px-6">
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={historicalData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-                <YAxis />
+                <XAxis dataKey="time" fontSize={12} />
+                <YAxis fontSize={12} />
                 <Tooltip />
                 <Line type="monotone" dataKey="nitrogen" stroke="#22c55e" strokeWidth={2} />
                 <Line type="monotone" dataKey="phosphorus" stroke="#3b82f6" strokeWidth={2} />
@@ -231,16 +231,16 @@ const RealTimeSoilAnalysis = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Environmental Conditions</CardTitle>
-            <CardDescription>Temperature, humidity, and moisture levels</CardDescription>
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="text-lg sm:text-xl">Environmental Conditions</CardTitle>
+            <CardDescription className="text-sm sm:text-base">Temperature, humidity, and moisture levels</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="px-4 sm:px-6">
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart data={historicalData.slice(-6)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-                <YAxis />
+                <XAxis dataKey="time" fontSize={12} />
+                <YAxis fontSize={12} />
                 <Tooltip />
                 <Bar dataKey="temperature" fill="#ef4444" />
                 <Bar dataKey="humidity" fill="#06b6d4" />
