@@ -74,48 +74,32 @@ const Navbar = () => {
 
         {/* Mobile Navigation Menu */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-gray-200 animate-fade-in">
+          <div className="md:hidden mt-4 pb-4 border-t border-gray-200">
             <div className="flex flex-col space-y-4 pt-4">
-              {/* Navigation Links */}
               <button 
                 onClick={() => scrollToSection('home')}
-                className="text-left text-gray-700 hover:text-grass-600 transition-colors font-medium py-2 px-2 rounded-md hover:bg-grass-50"
+                className="text-left text-gray-700 hover:text-grass-600 transition-colors font-medium py-2"
               >
                 Home
               </button>
               <button 
                 onClick={() => scrollToSection('features')}
-                className="text-left text-gray-700 hover:text-grass-600 transition-colors font-medium py-2 px-2 rounded-md hover:bg-grass-50"
+                className="text-left text-gray-700 hover:text-grass-600 transition-colors font-medium py-2"
               >
                 Features
               </button>
               <button 
                 onClick={() => scrollToSection('how-it-works')}
-                className="text-left text-gray-700 hover:text-grass-600 transition-colors font-medium py-2 px-2 rounded-md hover:bg-grass-50"
+                className="text-left text-gray-700 hover:text-grass-600 transition-colors font-medium py-2"
               >
                 How It Works
               </button>
-              
-              {/* Mobile Auth Buttons */}
-              <div className="flex flex-col space-y-3 pt-4 border-t border-gray-200">
-                <Button 
-                  asChild 
-                  variant="outline" 
-                  className="justify-start w-full border-grass-300 text-grass-700 hover:bg-grass-50 hover:text-grass-800 transition-all duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <Link to="/login">
-                    <span className="text-base font-medium">Login</span>
-                  </Link>
+              <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
+                <Button asChild variant="ghost" className="justify-start">
+                  <Link to="/login">Login</Link>
                 </Button>
-                <Button 
-                  asChild 
-                  className="justify-start w-full bg-grass-600 hover:bg-grass-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <Link to="/signup">
-                    <span className="text-base font-medium">Get Started</span>
-                  </Link>
+                <Button asChild className="bg-grass-600 hover:bg-grass-700 justify-start">
+                  <Link to="/signup">Get Started</Link>
                 </Button>
               </div>
             </div>
