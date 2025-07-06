@@ -37,38 +37,50 @@ const Video: React.FC<VideoProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
+  const [videoAspectRatio, setVideoAspectRatio] = useState(16/9);
 
+  // Detect screen size and device type
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const updateScreenSize = () => {
+      setScreenSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    updateScreenSize();
+    window.addEventListener('resize', updateScreenSize);
+    return () => window.removeEventListener('resize', updateScreenSize);
   }, []);
 
+  // Get video aspect ratio when metadata loads
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    const handleLoadedMetadata = () => {
+      const aspectRatio = video.videoWidth / video.videoHeight;
+      setVideoAspectRatio(aspectRatio);
+      setDuration(video.duration);
+    };
+
     const updateTime = () => setCurrentTime(video.currentTime);
-    const updateDuration = () => setDuration(video.duration);
     
     video.addEventListener('timeupdate', updateTime);
-    video.addEventListener('loadedmetadata', updateDuration);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('play', () => setIsPlaying(true));
     video.addEventListener('pause', () => setIsPlaying(false));
 
     return () => {
       video.removeEventListener('timeupdate', updateTime);
-      video.removeEventListener('loadedmetadata', updateDuration);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('play', () => setIsPlaying(true));
       video.removeEventListener('pause', () => setIsPlaying(false));
     };
   }, []);
 
+  // Auto-hide controls
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     
@@ -76,7 +88,7 @@ const Video: React.FC<VideoProps> = ({
       setShowControls(true);
       clearTimeout(timeout);
       timeout = setTimeout(() => {
-        if (isPlaying && !isMobile) {
+        if (isPlaying && screenSize.width >= 768) {
           setShowControls(false);
         }
       }, 3000);
@@ -95,7 +107,60 @@ const Video: React.FC<VideoProps> = ({
       }
       clearTimeout(timeout);
     };
-  }, [isPlaying, isMobile]);
+  }, [isPlaying, screenSize.width]);
+
+  // Calculate responsive video dimensions
+  const getVideoStyles = () => {
+    const { width: screenWidth, height: screenHeight } = screenSize;
+    const isMobile = screenWidth < 768;
+    const isTablet = screenWidth >= 768 && screenWidth < 1024;
+    const isDesktop = screenWidth >= 1024;
+
+    // Calculate available space (accounting for controls)
+    const controlsHeight = isMobile ? 80 : 100;
+    const availableHeight = screenHeight - controlsHeight;
+    const availableWidth = screenWidth;
+
+    // Calculate video dimensions based on aspect ratio
+    let videoWidth = availableWidth;
+    let videoHeight = availableWidth / videoAspectRatio;
+
+    // If video height exceeds available space, scale down
+    if (videoHeight > availableHeight) {
+      videoHeight = availableHeight;
+      videoWidth = availableHeight * videoAspectRatio;
+    }
+
+    // Device-specific adjustments
+    if (isMobile) {
+      // Mobile: Full width, maintain aspect ratio
+      return {
+        width: '100vw',
+        height: '100vh',
+        objectFit: 'contain' as const,
+        maxWidth: '100%',
+        maxHeight: '100%'
+      };
+    } else if (isTablet) {
+      // Tablet: Responsive with some padding
+      return {
+        width: `${Math.min(videoWidth, screenWidth * 0.95)}px`,
+        height: `${Math.min(videoHeight, screenHeight * 0.9)}px`,
+        objectFit: 'contain' as const,
+        maxWidth: '95vw',
+        maxHeight: '90vh'
+      };
+    } else {
+      // Desktop: Centered with optimal sizing
+      return {
+        width: `${Math.min(videoWidth, screenWidth * 0.9)}px`,
+        height: `${Math.min(videoHeight, screenHeight * 0.85)}px`,
+        objectFit: 'contain' as const,
+        maxWidth: '90vw',
+        maxHeight: '85vh'
+      };
+    }
+  };
 
   const handleBack = () => {
     navigate("/");
@@ -152,16 +217,22 @@ const Video: React.FC<VideoProps> = ({
   };
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const videoStyles = getVideoStyles();
+  const isMobile = screenSize.width < 768;
+  const isTablet = screenSize.width >= 768 && screenSize.width < 1024;
 
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-screen bg-black overflow-hidden"
+      className="relative w-full min-h-screen bg-black flex items-center justify-center overflow-hidden"
     >
-      {/* Video Element */}
+      {/* Video Element with Responsive Sizing */}
       <video
         ref={videoRef}
-        className="w-full h-full object-cover"
+        style={videoStyles}
+        className={`transition-all duration-300 ${
+          isMobile ? 'w-full h-full' : 'rounded-lg shadow-2xl'
+        }`}
         poster={poster}
         autoPlay={autoPlay}
         loop={loop}
@@ -188,7 +259,7 @@ const Video: React.FC<VideoProps> = ({
               variant="secondary"
               size={isMobile ? "sm" : "default"}
               onClick={handleBack}
-              className="flex items-center space-x-1 sm:space-x-2 bg-white/90 hover:bg-white text-gray-800 backdrop-blur-sm text-xs sm:text-sm"
+              className="flex items-center space-x-1 sm:space-x-2 bg-white/90 hover:bg-white text-gray-800 backdrop-blur-sm text-xs sm:text-sm transition-all duration-200 hover:scale-105"
             >
               <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Back to Home</span>
@@ -196,22 +267,22 @@ const Video: React.FC<VideoProps> = ({
             </Button>
 
             {/* Logo */}
-            <div className="flex items-center space-x-1 sm:space-x-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-2">
+            <div className="flex items-center space-x-1 sm:space-x-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-2 transition-all duration-200 hover:bg-white">
               <img src="/logo.png" alt="AgriCure Logo" className="h-4 w-4 sm:h-6 sm:w-6" />
               <span className="text-sm sm:text-lg font-bold text-grass-800">AgriCure</span>
             </div>
           </div>
         </div>
 
-        {/* Center Play Button (Mobile) */}
-        {isMobile && !isPlaying && (
+        {/* Center Play Button (when paused) */}
+        {!isPlaying && (
           <div className="absolute inset-0 flex items-center justify-center">
             <Button
               onClick={togglePlay}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-4 border-2 border-white/50"
-              size="lg"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full border-2 border-white/50 transition-all duration-300 hover:scale-110 shadow-lg"
+              size={isMobile ? "default" : "lg"}
             >
-              <Play className="h-8 w-8 text-white fill-white" />
+              <Play className={`${isMobile ? 'h-6 w-6' : 'h-8 w-8'} text-white fill-white`} />
             </Button>
           </div>
         )}
@@ -227,7 +298,7 @@ const Video: React.FC<VideoProps> = ({
                 max="100"
                 value={progress}
                 onChange={handleSeek}
-                className="w-full h-1 sm:h-2 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
+                className={`w-full ${isMobile ? 'h-2' : 'h-1 sm:h-2'} bg-white/30 rounded-lg appearance-none cursor-pointer slider transition-all duration-200`}
                 style={{
                   background: `linear-gradient(to right, #22c55e 0%, #22c55e ${progress}%, rgba(255,255,255,0.3) ${progress}%, rgba(255,255,255,0.3) 100%)`
                 }}
@@ -242,7 +313,7 @@ const Video: React.FC<VideoProps> = ({
                   onClick={togglePlay}
                   variant="ghost"
                   size={isMobile ? "sm" : "default"}
-                  className="text-white hover:bg-white/20 p-1 sm:p-2"
+                  className="text-white hover:bg-white/20 p-1 sm:p-2 transition-all duration-200 hover:scale-110"
                 >
                   {isPlaying ? (
                     <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -256,7 +327,7 @@ const Video: React.FC<VideoProps> = ({
                   onClick={toggleMute}
                   variant="ghost"
                   size={isMobile ? "sm" : "default"}
-                  className="text-white hover:bg-white/20 p-1 sm:p-2"
+                  className="text-white hover:bg-white/20 p-1 sm:p-2 transition-all duration-200 hover:scale-110"
                 >
                   {isMuted ? (
                     <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -266,20 +337,25 @@ const Video: React.FC<VideoProps> = ({
                 </Button>
 
                 {/* Time Display */}
-                <div className="text-white text-xs sm:text-sm font-mono">
+                <div className="text-white text-xs sm:text-sm font-mono bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </div>
               </div>
 
               {/* Right Controls */}
               <div className="flex items-center space-x-2">
-                {/* Fullscreen Toggle (Desktop only) */}
+                {/* Screen Size Indicator */}
+                <div className="text-white text-xs bg-black/30 px-2 py-1 rounded backdrop-blur-sm hidden sm:block">
+                  {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'}
+                </div>
+
+                {/* Fullscreen Toggle (Desktop/Tablet only) */}
                 {!isMobile && (
                   <Button
                     onClick={toggleFullscreen}
                     variant="ghost"
                     size="default"
-                    className="text-white hover:bg-white/20 p-2"
+                    className="text-white hover:bg-white/20 p-2 transition-all duration-200 hover:scale-110"
                   >
                     {isFullscreen ? (
                       <Minimize className="h-5 w-5" />
@@ -299,25 +375,33 @@ const Video: React.FC<VideoProps> = ({
         <>
           {/* Left tap zone - seek backward */}
           <div 
-            className="absolute left-0 top-1/4 bottom-1/4 w-1/3 z-40"
+            className="absolute left-0 top-1/4 bottom-1/4 w-1/3 z-40 flex items-center justify-center"
             onDoubleClick={() => {
               const video = videoRef.current;
               if (video) {
                 video.currentTime = Math.max(0, video.currentTime - 10);
               }
             }}
-          />
+          >
+            <div className="text-white text-xs bg-black/30 px-2 py-1 rounded opacity-0 hover:opacity-100 transition-opacity">
+              Double tap to -10s
+            </div>
+          </div>
           
           {/* Right tap zone - seek forward */}
           <div 
-            className="absolute right-0 top-1/4 bottom-1/4 w-1/3 z-40"
+            className="absolute right-0 top-1/4 bottom-1/4 w-1/3 z-40 flex items-center justify-center"
             onDoubleClick={() => {
               const video = videoRef.current;
               if (video) {
                 video.currentTime = Math.min(video.duration, video.currentTime + 10);
               }
             }}
-          />
+          >
+            <div className="text-white text-xs bg-black/30 px-2 py-1 rounded opacity-0 hover:opacity-100 transition-opacity">
+              Double tap to +10s
+            </div>
+          </div>
         </>
       )}
 
@@ -325,35 +409,43 @@ const Video: React.FC<VideoProps> = ({
       <style jsx>{`
         .slider::-webkit-slider-thumb {
           appearance: none;
-          height: 16px;
-          width: 16px;
+          height: ${isMobile ? '20px' : '16px'};
+          width: ${isMobile ? '20px' : '16px'};
           border-radius: 50%;
           background: #22c55e;
           cursor: pointer;
           border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+          transition: all 0.2s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+          transform: scale(1.2);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.6);
         }
 
         .slider::-moz-range-thumb {
-          height: 16px;
-          width: 16px;
+          height: ${isMobile ? '20px' : '16px'};
+          width: ${isMobile ? '20px' : '16px'};
           border-radius: 50%;
           background: #22c55e;
           cursor: pointer;
           border: 2px solid #ffffff;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+          transition: all 0.2s ease;
         }
 
-        @media (max-width: 640px) {
-          .slider::-webkit-slider-thumb {
-            height: 20px;
-            width: 20px;
-          }
-          
-          .slider::-moz-range-thumb {
-            height: 20px;
-            width: 20px;
-          }
+        .slider::-moz-range-thumb:hover {
+          transform: scale(1.2);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+        }
+
+        .slider:focus {
+          outline: none;
+        }
+
+        .slider:focus::-webkit-slider-thumb {
+          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
         }
       `}</style>
     </div>
